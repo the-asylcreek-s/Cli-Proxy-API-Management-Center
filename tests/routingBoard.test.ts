@@ -231,6 +231,13 @@ describe('arranging tiers', () => {
     expect(plan.settings).toEqual({ strategy: 'fill-first' });
     expect(plan.priorities['cred:runtime']).toBeUndefined();
   });
+
+  test('plans a soonest-reset strategy change as-is', () => {
+    const current = board();
+    const draft = draftFromBoard(current);
+    draft.settings = { ...draft.settings, strategy: 'soonest-reset' };
+    expect(buildRoutingPlan(current, draft).settings).toEqual({ strategy: 'soonest-reset' });
+  });
 });
 
 describe('writing a plan', () => {
