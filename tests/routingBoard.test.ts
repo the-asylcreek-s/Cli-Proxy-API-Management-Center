@@ -97,6 +97,12 @@ describe('routing board reading', () => {
       maxRetryCredentials: 0,
     });
     expect(readRoutingSettings({ routing: { strategy: 'bogus' } }).strategy).toBe('round-robin');
+    expect(readRoutingSettings({ routing: { strategy: 'soonest-reset' } }).strategy).toBe(
+      'soonest-reset'
+    );
+    expect(readRoutingSettings({ routing: { strategy: 'resetfirst' } }).strategy).toBe(
+      'soonest-reset'
+    );
   });
 
   test('expands groups with key overrides, compat providers and credentials', () => {
@@ -224,6 +230,13 @@ describe('arranging tiers', () => {
     expect(plan.weights).toEqual({ 'compat:0': [5, 2] });
     expect(plan.settings).toEqual({ strategy: 'fill-first' });
     expect(plan.priorities['cred:runtime']).toBeUndefined();
+  });
+
+  test('plans a soonest-reset strategy change as-is', () => {
+    const current = board();
+    const draft = draftFromBoard(current);
+    draft.settings = { ...draft.settings, strategy: 'soonest-reset' };
+    expect(buildRoutingPlan(current, draft).settings).toEqual({ strategy: 'soonest-reset' });
   });
 });
 
@@ -392,6 +405,15 @@ describe('route preview', () => {
     const current = board();
     const draft = draftFromBoard(current);
     draft.settings = { ...draft.settings, strategy: 'fill-first' };
+    const preview = resolveRoute(current, draft, catalog, null, 0);
+    expect(preview.tiers[0].state).toBe('active');
+    expect(preview.tiers[0].members[0].share).toBeNull();
+  });
+
+  test('soonest-reset has no fixed split', () => {
+    const current = board();
+    const draft = draftFromBoard(current);
+    draft.settings = { ...draft.settings, strategy: 'soonest-reset' };
     const preview = resolveRoute(current, draft, catalog, null, 0);
     expect(preview.tiers[0].state).toBe('active');
     expect(preview.tiers[0].members[0].share).toBeNull();
